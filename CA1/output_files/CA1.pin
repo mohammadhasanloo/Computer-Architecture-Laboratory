@@ -194,7 +194,7 @@ LEDR[6]                      : AD21      : output : 3.3-V LVTTL       :         
 LEDR[4]                      : AD22      : output : 3.3-V LVTTL       :         : 7         : Y              
 LEDR[5]                      : AD23      : output : 3.3-V LVTTL       :         : 7         : Y              
 GND*                         : AD24      :        :                   :         : 6         :                
-TD_CLK27                     : AD25      : input  : 3.3-V LVTTL       :         : 6         : N              
+GND*                         : AD25      :        :                   :         : 6         :                
 VCCIO6                       : AD26      : power  :                   : 3.3V    : 6         :                
 GND                          : AE1       : gnd    :                   :         :           :                
 DRAM_BA_0                    : AE2       : output : 3.3-V LVTTL       :         : 1         : Y              
@@ -647,7 +647,7 @@ GND                          : U8        : gnd    :                   :         
 HEX4[0]                      : U9        : output : 3.3-V LVTTL       :         : 1         : Y              
 GND*                         : U10       :        :                   :         : 1         :                
 VCCINT                       : U11       : power  :                   : 1.2V    :           :                
-GND*                         : U12       :        :                   :         : 8         :                
+TD_CLK27                     : U12       : input  : 3.3-V LVTTL       :         : 8         : N              
 VCCINT                       : U13       : power  :                   : 1.2V    :           :                
 VCCINT                       : U14       : power  :                   : 1.2V    :           :                
 VCCINT                       : U15       : power  :                   : 1.2V    :           :                

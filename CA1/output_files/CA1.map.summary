@@ -1,14 +1,14 @@
-Analysis & Synthesis Status : Successful - Wed Nov 01 15:38:50 2023
+Analysis & Synthesis Status : Successful - Wed Nov 08 15:57:06 2023
 Quartus II 64-Bit Version : 13.0.1 Build 232 06/12/2013 SP 1 SJ Web Edition
 Revision Name : CA1
 Top-level Entity Name : CA1
 Family : Cyclone II
-Total logic elements : 3,711
-    Total combinational functions : 1,297
-    Dedicated logic registers : 3,134
-Total registers : 3134
+Total logic elements : 2,649
+    Total combinational functions : 1,028
+    Dedicated logic registers : 2,186
+Total registers : 2186
 Total pins : 418
 Total virtual pins : 0
-Total memory bits : 20,736
+Total memory bits : 13,568
 Embedded Multiplier 9-bit elements : 0
 Total PLLs : 0

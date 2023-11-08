@@ -310,10 +310,29 @@ assign LEDG[0] = 1'b1 & SW[0];
     wire [31:0] pcOutIf, instOutIf;
     // IF-ID
     wire [31:0] pcOutIfId, instOutIfId;
+
     // ID
     wire [31:0] pcOutId;
+    wire [3:0] aluCmdOutId;
+    wire memReadOutId, memWriteOutId, wbEnOutId, branchOutId, sOutId;
+    wire [31:0] reg1OutId, reg2OutId;
+    wire immOutId;
+    wire [11:0] shiftOperandOutId;
+    wire [23:0] imm24OutId;
+    wire [3:0] destOutId;
+    wire [3:0] src1OutId, src2OutId;
     // ID-EXE
     wire [31:0] pcOutIdExe;
+    wire [3:0] aluCmdOutIdEx;
+    wire memReadOutIdEx, memWriteOutIdEx, wbEnOutIdEx, branchOutIdEx, sOutIdEx;
+    wire [31:0] reg1OutIdEx, reg2OutIdEx;
+    wire [3:0] src1OutIdEx, src2OutIdEx;
+    wire immOutIdEx;
+    wire [11:0] shiftOperandOutIdEx;
+    wire [23:0] imm24OutIdEx;
+    wire [3:0] destOutIdEx;
+    wire carryOut;
+
 	// EXE
     wire [31:0] pcOutExe;
     // EXE-Mem
@@ -341,15 +360,35 @@ assign LEDG[0] = 1'b1 & SW[0];
 		.Instruction(instOutIfId)
     );
 
-	ID_Stage idSt(
+    ID_Stage idSt(
         .clk(CLOCK_50), .rst(SW[0]),
-		.PC_in(pcOutIfId),
-        .PC(pcOutId)
+        .PC_in(pcOutIfId), .inst(instOutIfId),
+        .status(status),
+        .wbWbEn(wbEn), .wbValue(wbValue), .wbDest(wbDest),
+        .hazard(hazard),
+        .PC(pcOutId),
+        .aluCmd(aluCmdOutId), .memRead(memReadOutId), .memWrite(memWriteOutId),
+        .wbEn(wbEnOutId), .branch(branchOutId), .s(sOutId),
+        .reg1(reg1OutId), .reg2(reg2OutId),
+        .imm(immOutId), .shiftOperand(shiftOperandOutId), .imm24(imm24OutId), .dest(destOutId),
+        .src1(src1OutId), .src2(src2OutId), .hazardTwoSrc(hazardTwoSrc)
     );
     ID_Stage_Reg idStReg(
         .clk(CLOCK_50), .rst(SW[0]),
         .PC_in(pcOutId),
-        .PC(pcOutIdExe)
+        .EXE_CMD_In(aluCmdOutId), .MEM_R_EN_In(memReadOutId), .MEM_W_EN_In(memWriteOutId),
+        .WB_En_In(wbEnOutId), .B_In(branchOutId), .S_In(sOutId),
+        .reg1In(reg1OutId), .reg2In(reg2OutId),
+        .immIn(immOutId), .Shift_operand_In(shiftOperandOutId), .imm24In(imm24OutId), .Dest_In(destOutId),
+        .carryIn(carryIn), .src1In(src1OutId), .src2In(src2OutId),
+        .flush(1'b0), .freeze(1'b0),
+        .PC(pcOutIdExe),
+        .EXE_CMD(aluCmdOutIdEx), .MEM_R_EN(memReadOutIdEx), .MEM_W_EN(memWriteOutIdEx),
+        .WB_EN(wbEnOutIdEx), .B(branchOutIdEx), .S(sOutIdEx),
+        .reg1Out(reg1OutIdEx), .reg2Out(reg2OutIdEx),
+        .immOut(immOutIdEx), .Shift_operand(shiftOperandOutIdEx), .imm24Out(imm24OutIdEx), .Dest(destOutIdEx),
+        .src1Out(src1OutIdEx), .src2Out(src2OutIdEx),
+        .carryOut(carryOut)
     );
 
 	EXE_Stage exeSt(
