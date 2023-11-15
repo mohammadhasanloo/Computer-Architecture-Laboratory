@@ -333,10 +333,22 @@ assign LEDG[0] = 1'b1 & SW[0];
     wire [3:0] destOutIdEx;
     wire carryOut;
 
-	// EXE
-    wire [31:0] pcOutExe;
-    // EXE-Mem
-    wire [31:0] pcOutExeMem;
+    // EX
+    wire memReadOutEx, memWriteOutEx, wbEnOutEx;
+    wire branchTaken;
+    wire [31:0] branchAddr;
+    wire [31:0] aluResOutEx, reg2OutEx;
+    wire [3:0] destOutEx;
+    wire [3:0] status; // N Z C V
+    wire carryIn;
+    assign carryIn = status[1];
+    // EX-MEM
+    wire memReadOutExMem, memWriteOutExMem, wbEnOutExMem;
+    wire [31:0] aluResOutExMem, reg2OutExMem;
+    wire [3:0] destOutExMem;
+    // Forwarding
+    wire [1:0] selSrc1, selSrc2;
+
 	// MEM
     wire [31:0] pcOutMem;
     // MEM-WB
@@ -346,8 +358,8 @@ assign LEDG[0] = 1'b1 & SW[0];
 
 	IF_Stage ifSt(
         .clk(CLOCK_50), .rst(SW[0]),
-        .branch_taken(0), .freeze(1'b0),
-        .branchAddr(0),
+        .branch_taken(branchTaken), .freeze(1'b0),
+        .branchAddr(branchAddr),
         .PC(pcOutIf), 
 		.Instruction(instOutIf)
     );
@@ -391,15 +403,24 @@ assign LEDG[0] = 1'b1 & SW[0];
         .carryOut(carryOut)
     );
 
-	EXE_Stage exeSt(
+    EXE_Stage stEx(
         .clk(CLOCK_50), .rst(SW[0]),
-		.PC_in(pcOutIdExe),
-        .PC(pcOutExe)
+        .wbEnIn(wbEnOutIdEx), .memREnIn(memReadOutIdEx), .memWEnIn(memWriteOutIdEx),
+        .branchTakenIn(branchOutIdEx), .ldStatus(sOutIdEx), .imm(immOutIdEx), .carryIn(carryOut),
+        .exeCmd(aluCmdOutIdEx), .val1(reg1OutIdEx), .valRm(reg2OutIdEx), .pc(pcOutIdExe),
+        .shifterOperand(shiftOperandOutIdEx), .signedImm24(imm24OutIdEx), .dest(destOutIdEx),
+        .selSrc1(selSrc1), .selSrc2(selSrc2), .valMem(aluResOutExMem), .valWb(wbValue), // WBVALUE
+        .wbEnOut(wbEnOutEx), .memREnOut(memReadOutEx), .memWEnOut(memWriteOutEx),
+        .branchTakenOut(branchTaken), .aluRes(aluResOutEx), .exeValRm(reg2OutEx), .branchAddr(branchAddr),
+        .exeDest(destOutEx), .status(status)
     );
-    EXE_Stage_Reg exeStReg(
+    EXE_Stage_Reg regsEx(
         .clk(CLOCK_50), .rst(SW[0]),
-        .PC_in(pcOutExe),
-        .PC(pcOutExeMem)
+        .wbEnIn(wbEnOutEx), .memREnIn(memReadOutEx), .memWEnIn(memWriteOutEx),
+        .aluResIn(aluResOutEx), .valRmIn(reg2OutEx), .destIn(destOutEx),
+        .freeze(1'b0),
+        .wbEnOut(wbEnOutExMem), .memREnOut(memReadOutExMem), .memWEnOut(memWriteOutExMem),
+        .aluResOut(aluResOutExMem), .valRmOut(reg2OutExMem), .destOut(destOutExMem)
     );
 
 	MEM_Stage memSt(
