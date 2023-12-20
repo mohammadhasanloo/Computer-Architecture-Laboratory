@@ -128,7 +128,7 @@ module ARM(
 );
 
     TOP_LEVEL top_level(
-        .clk(CLOCK_50), .rst(SW[0])
+        .clk(CLOCK_50), .rst(SW[0]), .forwardEn(SW[1])
     );
 
     /*

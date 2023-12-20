@@ -14,10 +14,11 @@ module ID_Stage(
     output [11:0] Shift_operand,
     output signed [23:0] Signed_imm_24,
     output [3:0] Dest,
+    output [3:0] src1, src2,
 
     // Hazard
     input Hazard,
-    output [3:0] Hazard_Rn, Hazard_Rdm,
+    // output [3:0] Hazard_Rn, Hazard_Rdm,
     output Two_src
 );
     assign PC = PC_in;
@@ -25,16 +26,19 @@ module ID_Stage(
     assign Shift_operand = inst[11:0];
     assign Signed_imm_24 = inst[23:0];
     assign Dest = inst[15:12];
-    assign Hazard_Rn = inst[19:16];
+    // assign Hazard_Rn = inst[19:16];
+    assign src1 = inst[19:16];
     assign Two_src = ~imm | MEM_W_EN;
 
     wire [3:0] aluCmdCU;
     wire memReadCU, memWriteCU, wbEnCU, branchCU, sCU;
     wire [3:0] registerfile_input;
     wire Cond, OR_Output;
+    wire [31:0] regRn, regRm;
 
     assign OR_Output = ~Cond | Hazard;
-    assign Hazard_Rdm = registerfile_input;
+    // assign Hazard_Rdm = registerfile_input;
+    assign src2 = registerfile_input;
 
     Condition_Check condition_check(
         .Cond(inst[31:28]),
@@ -62,8 +66,10 @@ module ID_Stage(
         .Dest_wb(wbDest),
         .Result_WB(WB_Value),
         .Write_Back_En(WB_WB_EN),
-        .reg1(reg1),
-        .reg2(reg2)
+        // .reg1(reg1),
+        // .reg2(reg2)
+        .reg1(regRn),
+        .reg2(regRm)
     );
 
     Mux2To1 #(9) mux_control_unit(
@@ -79,6 +85,21 @@ module ID_Stage(
         .sel(MEM_W_EN),
         .out(registerfile_input)
     );
+
+    Mux2To1 #(32) muxRn15(
+        .a0(regRn),
+        .a1(PC_in),
+        .sel(&inst[19:16]),
+        .out(reg1)
+    );
+
+    Mux2To1 #(32) muxRm15(
+        .a0(regRm),
+        .a1(PC_in),
+        .sel(&registerfile_input),
+        .out(reg2)
+    );
+
 endmodule
 
 module Control_Unit(

@@ -3,6 +3,7 @@ module ID_Stage_Reg(
     input [31:0] PC_in,
     input [3:0] EXE_CMD_In,
     input [31:0] reg1In, reg2In,
+    input [3:0] src1In, src2In,
     input imm_In,
     input [11:0] Shift_operand_In,
     input signed [23:0] Signed_imm_24_In,
@@ -13,6 +14,7 @@ module ID_Stage_Reg(
     output [3:0] EXE_CMD_Out,Dest_Out,
     output [31:0] reg1Out, reg2Out,
     output [11:0] Shift_operand_Out,
+    output [3:0] src1Out, src2Out,
     output signed [23:0] Signed_imm_24_Out
 );
     Register #(32) pcReg(
@@ -100,4 +102,17 @@ module ID_Stage_Reg(
         .in(carryIn), .ld(1'b1), .clr(Flush),
         .out(carryOut)
     );
+
+    Register #(4) src1Reg(
+        .clk(clk), .rst(rst),
+        .in(src1In), .ld(1'b1), .clr(Flush),
+        .out(src1Out)
+    );
+
+    Register #(4) src2Reg(
+        .clk(clk), .rst(rst),
+        .in(src2In), .ld(1'b1), .clr(Flush),
+        .out(src2Out)
+    );
+
 endmodule

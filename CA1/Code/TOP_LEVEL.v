@@ -1,12 +1,17 @@
 module TOP_LEVEL(
-    input clk, rst
+    input clk, rst,
+    input forwardEn
 );
     // Hazard
     wire Hazard, Two_src;
-    wire [3:0] Hazard_Rn, Hazard_Rdm;
-
+    // wire [3:0] Hazard_Rn, Hazard_Rdm;
+    
+    // Forwarding
+    wire [1:0] selSrc1, selSrc2;
     // IF
     wire [31:0] pcOutIf, instOutIf;
+    wire [3:0] src1OutId, src2OutId;
+
     // IF-Reg
     wire [31:0] pcOutIfId, instOutIfId;
     // ID
@@ -22,6 +27,7 @@ module TOP_LEVEL(
     wire [3:0] aluCmdOutIdEx;
     wire memReadOutIdEx, memWriteOutIdEx, wbEnOutIdEx, branchOutIdEx, sOutIdEx;
     wire [31:0] reg1OutIdEx, reg2OutIdEx;
+    wire [3:0] src1OutIdEx, src2OutIdEx;
     wire immOutIdEx;
     wire [11:0] shiftOperandOutIdEx;
     wire [23:0] imm24OutIdEx;
@@ -53,11 +59,21 @@ module TOP_LEVEL(
     wire [3:0] wbDest;
 
     Hazard_Unit hzrd(
-        .Rn(Hazard_Rn), .Rdm(Hazard_Rdm),
+        // .Rn(Hazard_Rn), .Rdm(Hazard_Rdm),
+        .Rn(src1OutId), .Rdm(src2OutId),
         .Two_src(Two_src),
         .Dest_Ex(destOutEx), .Dest_Mem(destOutMem),
-        .WB_EN_EXE(wbEnOutEx), .WB_EN_MEM(wbEnOutMem),
+        .WB_EN_EXE(wbEnOutEx), .WB_EN_MEM(wbEnOutMem), .memREn(memReadOutEx),
+        .forwardEn(forwardEn),
         .Hazard(Hazard)
+    );
+
+    ForwardingUnit frwrd(
+        .forwardEn(forwardEn),
+        .src1(src1OutIdEx), .src2(src2OutIdEx),
+        .wbEnMem(wbEnOutExMem), .wbEnWb(wbEnOutMemWb),
+        .destMem(destOutExMem), .destWb(destOutMemWb),
+        .selSrc1(selSrc1), .selSrc2(selSrc2)
     );
 
     IF_Stage stIf(
@@ -84,7 +100,8 @@ module TOP_LEVEL(
         .WB_EN(wbEnOutId), .B(branchOutId), .S(sOutId),
         .reg1(reg1OutId), .reg2(reg2OutId),
         .imm(immOutId), .Shift_operand(shiftOperandOutId), .Signed_imm_24(imm24OutId), .Dest(destOutId),
-        .Hazard_Rn(Hazard_Rn), .Hazard_Rdm(Hazard_Rdm), .Two_src(Two_src)
+        // .Hazard_Rn(Hazard_Rn), .Hazard_Rdm(Hazard_Rdm), .Two_src(Two_src)
+        .src1(src1OutId), .src2(src2OutId), .Two_src(Two_src)
     );
     ID_Stage_Reg regsId(
         .clk(clk), .rst(rst),
@@ -93,12 +110,13 @@ module TOP_LEVEL(
         .WB_EN_In(wbEnOutId), .B_In(branchOutId), .S_In(sOutId),
         .reg1In(reg1OutId), .reg2In(reg2OutId),
         .imm_In(immOutId), .Shift_operand_In(shiftOperandOutId), .Signed_imm_24_In(imm24OutId), .Dest_In(destOutId),
-        .carryIn(carryIn), .Flush(Branch_taken),
+        .carryIn(carryIn), .src1In(src1OutId), .src2In(src2OutId), .Flush(Branch_taken),
         .PC(pcOutIdEx),
         .EXE_CMD_Out(aluCmdOutIdEx), .MEM_R_EN_Out(memReadOutIdEx), .MEM_W_EN_Out(memWriteOutIdEx),
         .WB_EN_Out(wbEnOutIdEx), .B_Out(branchOutIdEx), .S_Out(sOutIdEx),
         .reg1Out(reg1OutIdEx), .reg2Out(reg2OutIdEx),
         .imm_Out(immOutIdEx), .Shift_operand_Out(shiftOperandOutIdEx), .Signed_imm_24_Out(imm24OutIdEx), .Dest_Out(destOutIdEx),
+        .src1Out(src1OutIdEx), .src2Out(src2OutIdEx),
         .carryOut(carryOut)
     );
 
@@ -108,6 +126,7 @@ module TOP_LEVEL(
         .Brach_Taken_In(branchOutIdEx), .ldStatus(sOutIdEx), .imm(immOutIdEx), .carryIn(carryOut),
         .EXE_CMD(aluCmdOutIdEx), .Val_Rn(reg1OutIdEx), .Val_Rm(reg2OutIdEx), .PC(pcOutIdEx),
         .Shift_operand(shiftOperandOutIdEx), .Signed_EX_imm24(imm24OutIdEx), .Dest(destOutIdEx),
+        .selSrc1(selSrc1), .selSrc2(selSrc2), .valMem(aluResOutExMem), .valWb(WB_Value),
         .WB_EN_Out(wbEnOutEx), .MEM_R_EN_Out(memReadOutEx), .MEM_W_EN_Out(memWriteOutEx),
         .Brach_Taken_Out(Branch_taken), .ALU_Res(aluResOutEx), .EXE_Val_Rm(reg2OutEx), .Branch_Address(Branch_Address),
         .EXE_Dest(destOutEx), .status(status)
