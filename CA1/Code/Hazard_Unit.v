@@ -3,12 +3,12 @@ module Hazard_Unit(
     input Two_src,
     input [3:0] Dest_Ex, Dest_Mem,
     input WB_EN_EXE, WB_EN_MEM, memREn,
-    input forwardEn,
+    input Forward_En,
     output reg Hazard
 );
-    always @(Rn, Rdm, Dest_Ex, Dest_Mem, WB_EN_EXE, WB_EN_MEM, memREn, Two_src, forwardEn) begin
+    always @(Rn, Rdm, Dest_Ex, Dest_Mem, WB_EN_EXE, WB_EN_MEM, memREn, Two_src, Forward_En) begin
         Hazard = 1'b0;
-        if (forwardEn) begin
+        if (Forward_En) begin
             if (memREn) begin
                 if (Rn == Dest_Ex || (Two_src && Rdm == Dest_Ex)) begin
                     Hazard = 1'b1;

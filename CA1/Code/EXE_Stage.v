@@ -1,7 +1,7 @@
 module EXE_Stage(
     input clk, rst, WB_EN_In, MEM_R_EN_In, MEM_W_EN_In, Brach_Taken_In, ldStatus, imm, carryIn,
     input [3:0] EXE_CMD, Dest,
-    input [1:0] selSrc1, selSrc2,
+    input [1:0] Sel_src1, Sel_src2,
     input [31:0] valMem, valWb,
     input [11:0] Shift_operand,
     input [23:0] Signed_EX_imm24,
@@ -16,8 +16,6 @@ module EXE_Stage(
     assign WB_EN_Out = WB_EN_In;
     assign MEM_R_EN_Out = MEM_R_EN_In;
     assign MEM_W_EN_Out = MEM_W_EN_In;
-    // assign EXE_Val_Rm = Val_Rm;
-    // wire [31:0] Val2;
     wire [31:0] aluSrc1, aluSrc2, val2;
     assign EXE_Val_Rm = aluSrc2;
     wire [3:0] StatusBits;
@@ -25,19 +23,13 @@ module EXE_Stage(
     Val2_Generate val2gen(
         .memInst(MEM_R_EN_In | MEM_W_EN_In),
         .imm(imm),
-        // .Val_Rm(Val_Rm),
         .Val_Rm(aluSrc2),
         .Shift_operand(Shift_operand),
-        // .Val2(Val2)
-        // .Val2(aluSrc2),
         .Val2(val2)
     );
 
     ALU alu(
-        // .a(Val_Rn),
-        // .b(Val2),
         .a(aluSrc1),
-        // .b(aluSrc2),
         .b(val2),
         .carryIn(carryIn),
         .EXE_CMD(EXE_CMD),
@@ -62,13 +54,12 @@ module EXE_Stage(
         .out(Branch_Address)
     );
 
-    // Forwarding Unit
     Mux4To1 #(32) muxSrc1(
         .a00(Val_Rn),
         .a01(valMem),
         .a10(valWb),
         .a11(32'd0),
-        .sel(selSrc1),
+        .sel(Sel_src1),
         .out(aluSrc1)
     );
 
@@ -77,7 +68,7 @@ module EXE_Stage(
         .a01(valMem),
         .a10(valWb),
         .a11(32'd0),
-        .sel(selSrc2),
+        .sel(Sel_src2),
         .out(aluSrc2)
     );
 

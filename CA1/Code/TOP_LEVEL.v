@@ -1,13 +1,12 @@
 module TOP_LEVEL(
     input clk, rst,
-    input forwardEn
+    input Forward_En
 );
     // Hazard
     wire Hazard, Two_src;
-    // wire [3:0] Hazard_Rn, Hazard_Rdm;
     
     // Forwarding
-    wire [1:0] selSrc1, selSrc2;
+    wire [1:0] Sel_src1, Sel_src2;
     // IF
     wire [31:0] pcOutIf, instOutIf;
     wire [3:0] src1OutId, src2OutId;
@@ -59,21 +58,20 @@ module TOP_LEVEL(
     wire [3:0] wbDest;
 
     Hazard_Unit hzrd(
-        // .Rn(Hazard_Rn), .Rdm(Hazard_Rdm),
         .Rn(src1OutId), .Rdm(src2OutId),
         .Two_src(Two_src),
         .Dest_Ex(destOutEx), .Dest_Mem(destOutMem),
         .WB_EN_EXE(wbEnOutEx), .WB_EN_MEM(wbEnOutMem), .memREn(memReadOutEx),
-        .forwardEn(forwardEn),
+        .Forward_En(Forward_En),
         .Hazard(Hazard)
     );
 
     ForwardingUnit frwrd(
-        .forwardEn(forwardEn),
+        .Forward_En(Forward_En),
         .src1(src1OutIdEx), .src2(src2OutIdEx),
-        .wbEnMem(wbEnOutExMem), .wbEnWb(wbEnOutMemWb),
+        .WB_EN_MEM(wbEnOutExMem), .WB_EN_WB(wbEnOutMemWb),
         .destMem(destOutExMem), .destWb(destOutMemWb),
-        .selSrc1(selSrc1), .selSrc2(selSrc2)
+        .Sel_src1(Sel_src1), .Sel_src2(Sel_src2)
     );
 
     IF_Stage stIf(
@@ -100,7 +98,6 @@ module TOP_LEVEL(
         .WB_EN(wbEnOutId), .B(branchOutId), .S(sOutId),
         .reg1(reg1OutId), .reg2(reg2OutId),
         .imm(immOutId), .Shift_operand(shiftOperandOutId), .Signed_imm_24(imm24OutId), .Dest(destOutId),
-        // .Hazard_Rn(Hazard_Rn), .Hazard_Rdm(Hazard_Rdm), .Two_src(Two_src)
         .src1(src1OutId), .src2(src2OutId), .Two_src(Two_src)
     );
     ID_Stage_Reg regsId(
@@ -126,7 +123,7 @@ module TOP_LEVEL(
         .Brach_Taken_In(branchOutIdEx), .ldStatus(sOutIdEx), .imm(immOutIdEx), .carryIn(carryOut),
         .EXE_CMD(aluCmdOutIdEx), .Val_Rn(reg1OutIdEx), .Val_Rm(reg2OutIdEx), .PC(pcOutIdEx),
         .Shift_operand(shiftOperandOutIdEx), .Signed_EX_imm24(imm24OutIdEx), .Dest(destOutIdEx),
-        .selSrc1(selSrc1), .selSrc2(selSrc2), .valMem(aluResOutExMem), .valWb(WB_Value),
+        .Sel_src1(Sel_src1), .Sel_src2(Sel_src2), .valMem(aluResOutExMem), .valWb(WB_Value),
         .WB_EN_Out(wbEnOutEx), .MEM_R_EN_Out(memReadOutEx), .MEM_W_EN_Out(memWriteOutEx),
         .Brach_Taken_Out(Branch_taken), .ALU_Res(aluResOutEx), .EXE_Val_Rm(reg2OutEx), .Branch_Address(Branch_Address),
         .EXE_Dest(destOutEx), .status(status)
