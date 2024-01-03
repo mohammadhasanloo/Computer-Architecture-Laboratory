@@ -1,7 +1,21 @@
 module TOP_LEVEL(
-    input clk, rst,
-    input Forward_En
+    input clock, rst,
+    input Forward_En,
+    inout [15:0] SRAM_DQ,
+    output [17:0] SRAM_ADDR,
+    output SRAM_UB_N,
+    output SRAM_LB_N,
+    output SRAM_WE_N,
+    output SRAM_CE_N,
+    output SRAM_OE_N
 );
+    wire clk;
+    FreqDiv freqDiv(
+        .clk(clock), .rst(rst),
+        .en(1'b1), .co(clk)
+    );
+    // assign clk = clock;
+
     // Hazard
     wire Hazard, Two_src;
     
@@ -48,6 +62,7 @@ module TOP_LEVEL(
     wire memReadOutMem, wbEnOutMem;
     wire [31:0] aluResOutMem, memDataOutMem;
     wire [3:0] destOutMem;
+    wire ramFreeze;
     // MEM-Reg
     wire memReadOutMemWb, wbEnOutMemWb;
     wire [31:0] aluResOutMemWb, memDataOutMemWb;
@@ -76,13 +91,13 @@ module TOP_LEVEL(
 
     IF_Stage stIf(
         .clk(clk), .rst(rst),
-        .Branch_taken(Branch_taken), .freeze(Hazard),
+        .Branch_taken(Branch_taken), .Freeze(Hazard | ramFreeze),
         .Branch_Address(Branch_Address),
         .PC(pcOutIf), .Instruction(instOutIf)
     );
     IF_Stage_Reg regsIf(
         .clk(clk), .rst(rst),
-        .freeze(Hazard), .Flush(Branch_taken),
+        .Freeze(Hazard | ramFreeze), .Flush(Branch_taken),
         .PC_in(pcOutIf), .Instruction_in(instOutIf),
         .PC(pcOutIfId), .Instruction(instOutIfId)
     );
@@ -108,7 +123,7 @@ module TOP_LEVEL(
         .reg1In(reg1OutId), .reg2In(reg2OutId),
         .imm_In(immOutId), .Shift_operand_In(shiftOperandOutId), .Signed_imm_24_In(imm24OutId), .Dest_In(destOutId),
         .carryIn(carryIn), .src1In(src1OutId), .src2In(src2OutId), .Flush(Branch_taken),
-        .PC(pcOutIdEx),
+        .PC(pcOutIdEx), .Freeze(ramFreeze),
         .EXE_CMD_Out(aluCmdOutIdEx), .MEM_R_EN_Out(memReadOutIdEx), .MEM_W_EN_Out(memWriteOutIdEx),
         .WB_EN_Out(wbEnOutIdEx), .B_Out(branchOutIdEx), .S_Out(sOutIdEx),
         .reg1Out(reg1OutIdEx), .reg2Out(reg2OutIdEx),
@@ -131,7 +146,7 @@ module TOP_LEVEL(
     EXE_Stage_Reg regsEx(
         .clk(clk), .rst(rst),
         .WB_EN_In(wbEnOutEx), .MEM_R_EN_In(memReadOutEx), .MEM_W_EN_In(memWriteOutEx),
-        .ALU_Res_In(aluResOutEx), .valRmIn(reg2OutEx), .Dest_In(destOutEx),
+        .ALU_Res_In(aluResOutEx), .valRmIn(reg2OutEx), .Dest_In(destOutEx), .Freeze(ramFreeze),
         .WB_EN_Out(wbEnOutExMem), .MEM_R_EN_Out(memReadOutExMem), .MEM_W_EN_Out(memWriteOutExMem),
         .ALU_Res_Out(aluResOutExMem), .valRmOut(reg2OutExMem), .Dest_Out(destOutExMem)
     );
@@ -141,14 +156,23 @@ module TOP_LEVEL(
         .WB_EN_In(wbEnOutExMem), .MEM_R_EN_In(memReadOutExMem), .MEM_W_EN_In(memWriteOutExMem),
         .ALU_Res_In(aluResOutExMem), .Val_Rm(reg2OutExMem), .Dest_In(destOutExMem),
         .WB_EN_Out(wbEnOutMem), .MEM_R_EN_Out(memReadOutMem),
-        .ALU_Res_Out(aluResOutMem), .memOut(memDataOutMem), .Dest_Out(destOutMem)
+        .ALU_Res_Out(aluResOutMem), .memOut(memDataOutMem), .Dest_Out(destOutMem),
+        .Freeze(ramFreeze),
+        .SRAM_ADDR(SRAM_ADDR),
+        .SRAM_DQ(SRAM_DQ),
+        .SRAM_UB_N(SRAM_UB_N),
+        .SRAM_LB_N(SRAM_LB_N),
+        .SRAM_WE_N(SRAM_WE_N),
+        .SRAM_CE_N(SRAM_CE_N),
+        .SRAM_OE_N(SRAM_DE_N)
     );
     MEM_Stage_Reg regsMem(
         .clk(clk), .rst(rst),
         .WB_EN_In(wbEnOutMem), .MEM_R_EN_In(memReadOutMem),
         .ALU_Res_In(aluResOutMem), .Mem_Data_In(memDataOutMem), .Dest_In(destOutMem),
         .WB_EN_Out(wbEnOutMemWb), .MEM_R_EN_Out(memReadOutMemWb),
-        .ALU_Res_Out(aluResOutMemWb), .Mem_Data_Out(memDataOutMemWb), .Dest_Out(destOutMemWb)
+        .ALU_Res_Out(aluResOutMemWb), .Mem_Data_Out(memDataOutMemWb), .Dest_Out(destOutMemWb),
+        .Freeze(ramFreeze)
     );
 
     WB_Stage stWb(
@@ -157,4 +181,26 @@ module TOP_LEVEL(
         .ALU_Res(aluResOutMemWb), .Mem_Data(memDataOutMemWb), .Dest_In(destOutMemWb),
         .WB_EN_Out(WB_EN), .WB_Value(WB_Value), .Dest_Out(wbDest)
     );
+endmodule
+
+module FreqDiv #(
+    parameter Bits = 1
+)(
+    input clk, rst, en,
+    output co
+);
+    reg [Bits-1:0] q;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            q <= {Bits{1'b0}};
+        else if (en) begin
+            if (co)
+                q <= {Bits{1'b0}};
+            else
+                q <= q + 1;
+        end
+    end
+
+    assign co = &q;
 endmodule

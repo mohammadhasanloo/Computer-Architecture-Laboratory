@@ -1,5 +1,5 @@
 module IF_Stage(
-    input clk, rst, Branch_taken, freeze,
+    input clk, rst, Branch_taken, Freeze,
     input [31:0] Branch_Address,
     output [31:0] PC, Instruction
 );
@@ -22,7 +22,7 @@ module IF_Stage(
         .clk(clk),
         .rst(rst),
         .in(pc_reg_in),
-        .ld(~freeze),
+        .ld(~Freeze),
         .clr(1'b0),
         .out(pc_reg_out)
     );
@@ -91,6 +91,7 @@ module Instruction_Memory(
             32'd176: inst = 32'b1110_01_0_0100_1_0000_0101_000000010000; // LDR	  R5,  [R0], #16      -> R5 = -123
             32'd180: inst = 32'b1110_01_0_0100_1_0000_0110_000000010100; // LDR	  R6,  [R0], #20      -> R4 = 10
             32'd184: inst = 32'b1110_10_1_0_111111111111111111111111;    // B	  #-1                 -> PC = 32'd184 (infinite loop)
+            default: inst = 32'd0;
         endcase
     end
 endmodule

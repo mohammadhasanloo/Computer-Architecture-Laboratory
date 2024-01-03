@@ -125,11 +125,11 @@ module ALU(
     assign z = ~|out;
     assign n = out[31];
 
-    wire [31:0] carryExt, nCarryExt;
-    assign carryExt = {{(31){1'b0}}, carryIn};
-    assign nCarryExt = {{(31){1'b0}}, ~carryIn};
+    wire [31:0] Carry_Ext, Negative_Carry_Ext;
+    assign Carry_Ext = {{(31){1'b0}}, carryIn};
+    assign Negative_Carry_Ext = {{(31){1'b0}}, ~carryIn};
 
-    always @(EXE_CMD or a or b or carryIn) begin
+    always @(EXE_CMD or a or b or Carry_Ext or Negative_Carry_Ext) begin
         out = {32{1'b0}};
         c = 1'b0;
 
@@ -137,9 +137,9 @@ module ALU(
             4'b0001: out = b;                      // MOV
             4'b1001: out = ~b;                     // MVN
             4'b0010: {c, out} = a + b;             // ADD
-            4'b0011: {c, out} = a + b + carryExt;  // ADC
+            4'b0011: {c, out} = a + b + Carry_Ext;  // ADC
             4'b0100: {c, out} = a - b;             // SUB
-            4'b0101: {c, out} = a - b - nCarryExt; // SBC
+            4'b0101: {c, out} = a - b - Negative_Carry_Ext; // SBC
             4'b0110: out = a & b;                  // AND
             4'b0111: out = a | b;                  // ORR
             4'b1000: out = a ^ b;                  // EOR

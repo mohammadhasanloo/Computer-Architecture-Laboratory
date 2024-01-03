@@ -28,7 +28,8 @@ module ID_Stage(
     assign Dest = inst[15:12];
     // assign Hazard_Rn = inst[19:16];
     assign src1 = inst[19:16];
-    assign Two_src = ~imm | MEM_W_EN;
+    // assign Two_src = ~imm | MEM_W_EN;
+
 
     wire [3:0] aluCmdCU;
     wire memReadCU, memWriteCU, wbEnCU, branchCU, sCU;
@@ -37,6 +38,7 @@ module ID_Stage(
     wire [31:0] regRn, regRm;
 
     assign OR_Output = ~Cond | Hazard;
+    assign Two_src = ~imm | memWriteCU;
     // assign Hazard_Rdm = registerfile_input;
     assign src2 = registerfile_input;
 
@@ -82,7 +84,7 @@ module ID_Stage(
     Mux2To1 #(4) mux_register_file(
         .a0(inst[3:0]),
         .a1(inst[15:12]),
-        .sel(MEM_W_EN),
+        .sel(memWriteCU),
         .out(registerfile_input)
     );
 
@@ -156,7 +158,7 @@ module Condition_Check(
     wire n, z, c, v;
     assign {n, z, c, v} = status;
 
-    always @(Cond, status) begin
+    always @(Cond, n, z, c, v) begin
         res = 1'b0;
         case (Cond)
             4'b0000: res = z;             // EQ
