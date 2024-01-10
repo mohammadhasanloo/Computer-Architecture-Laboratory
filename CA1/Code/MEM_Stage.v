@@ -33,13 +33,17 @@ module MEM_Stage(
     wire ready;
     assign Freeze = ~ready;
 
+    wire sramReady;
+    wire sramMemWEnIn, sramMemREnIn;
+    wire [63:0] sramReadData;
+
     SramController sc(
         .clk(clk), .rst(rst),
-        .Write_En(MEM_W_EN_In), .Read_En(MEM_R_EN_In),
+        .Write_En(sramMemWEnIn), .Read_En(sramMemREnIn),
         .address(ALU_Res_In),
         .writeData(Val_Rm),
-        .readData(memOut),
-        .ready(ready),
+        .readData(sramReadData),
+        .ready(sramReady),
         .SRAM_DQ(SRAM_DQ),
         .SRAM_ADDR(SRAM_ADDR),
         .SRAM_UB_N(SRAM_UB_N),
@@ -48,6 +52,19 @@ module MEM_Stage(
         .SRAM_CE_N(SRAM_CE_N),
         .SRAM_OE_N(SRAM_OE_N)
     );
+
+    CacheController cc(
+        .clk(clk), .rst(rst),
+        .wrEn(MEM_W_EN_In), .rdEn(MEM_R_EN_In),
+        .address(ALU_Res_In),
+        .writeData(Val_Rm),
+        .readData(memOut),
+        .ready(ready),
+        .sramReady(sramReady),
+        .sramReadData(sramReadData),
+        .sramWrEn(sramMemWEnIn), .sramRdEn(sramMemREnIn)
+    );
+
     Mux2To1 #(1) ramWbEn(
         .a0(WB_EN_In),
         .a1(1'b0),
